@@ -211,3 +211,6 @@ __marimo__/
 
 # Local data directory with images for training
 /data/
+
+# .idea folder
+.idea/
