@@ -77,44 +77,6 @@ def make_thumbnail(path, size=(500,500)):
     img.thumbnail(size)
     return ImageTk.PhotoImage(img)
 
-def review_group(group):
-    win = tk.Toplevel()
-    win.title(f"Review {group[0].parent.name}")
-    sel = tk.IntVar(value=-1)
-
-    # Thumbnails + radio buttons
-    for idx, path in enumerate(group):
-        thumb = make_thumbnail(path)
-        lbl = tk.Label(win, image=thumb)
-        lbl.image = thumb
-        lbl.grid(row=0, column=idx, padx=5, pady=5)
-        rb = tk.Radiobutton(win, variable=sel, value=idx, text=path.name)
-        rb.grid(row=1, column=idx)
-
-    def on_keep():
-        keep_idx = sel.get()
-        if keep_idx >= 0:
-            for i,p in enumerate(group):
-                if i != keep_idx:
-                    p.unlink(missing_ok=True)
-        win.destroy()
-
-    def on_skip():
-        win.destroy()
-
-    def on_del_all():
-        for p in group:
-            p.unlink(missing_ok=True)
-        win.destroy()
-
-    btn_keep = tk.Button(win, text="Keep Selected", command=on_keep)
-    btn_skip = tk.Button(win, text="Skip",         command=on_skip)
-    btn_delete_all = tk.Button(win, text="Delete All", command=on_del_all)
-    btn_keep.grid(row=2, column=0, pady=10)
-    btn_skip.grid(row=2, column=1, pady=10)
-    btn_delete_all.grid(row=2, column=2, pady=10)
-    win.wait_window()
-
 def review_all(groups):
     def on_keep():
         keep_idx = sel.get()
@@ -149,18 +111,21 @@ def review_all(groups):
 
         # Thumbnails + radio buttons
         for idx, path in enumerate(group):
+            display_path = Path(*path.parts[-4:]) if len(path.parts) >= 4 else path
+            path_lbl = tk.Label(win, text=str(display_path))
+            path_lbl.grid(row=1, column=idx, padx=5, pady=(0, 2))
             thumb = make_thumbnail(path)
             lbl = tk.Label(win, image=thumb)
             lbl.image = thumb
-            lbl.grid(row=1, column=idx, padx=5, pady=5)
+            lbl.grid(row=2, column=idx, padx=5, pady=5)
             rb = tk.Radiobutton(win, variable=sel, value=idx, text=path.name)
-            rb.grid(row=2, column=idx)
+            rb.grid(row=3, column=idx)
         btn_keep = tk.Button(win, text="Keep Selected", command=on_keep)
         btn_skip = tk.Button(win, text="Skip", command=on_skip)
         btn_delete_all = tk.Button(win, text="Delete All", command=on_del_all)
-        btn_keep.grid(row=3, column=0, pady=10)
-        btn_skip.grid(row=3, column=1, pady=10)
-        btn_delete_all.grid(row=3, column=2, pady=10)
+        btn_keep.grid(row=4, column=0, pady=10)
+        btn_skip.grid(row=4, column=1, pady=10)
+        btn_delete_all.grid(row=4, column=2, pady=10)
         win.title(f"Review {group[0].parent.name}")
 
     def next_group():
@@ -190,7 +155,7 @@ def review_all(groups):
 if __name__ == "__main__":
     # Replace this with your grouping logic that produces `groups: list[list[Path]]`
     from duplicate_finder import find_image_files, compute_hashes, bucket_hashes, group_similar_images
-    SRC = Path(__file__).parent.parent / "data" / "raw" / "restaurant_images"
+    SRC = Path(__file__).parent.parent.parent / "data" / "raw" / "restaurant_images"
     files  = find_image_files(SRC)
 
     if not files:
@@ -198,7 +163,7 @@ if __name__ == "__main__":
 
     hashes = compute_hashes(files)
     buckets= bucket_hashes(hashes, prefix_bits=12)
-    groups = group_similar_images(buckets, threshold=5)
+    groups = group_similar_images(buckets, threshold=10)
 
     if not groups:
         print("No similar image groups found.")
